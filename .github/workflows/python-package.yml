@@ -38,4 +38,5 @@ jobs:
 
     - name: Publish to PyPI
       run: |
+        poetry build
         poetry publish
