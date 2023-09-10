@@ -38,5 +38,5 @@ jobs:
 
     - name: Publish to PyPI
       run: |
-        poetry config pypi-token.pypi $PYPI_TOKEN
+        poetry config http-basic.pypi devjev $PYPI_TOKEN
         poetry publish --build
