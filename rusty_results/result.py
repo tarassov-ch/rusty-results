@@ -1,7 +1,7 @@
 from typing import TypeVar, Generic, Literal, Union, Protocol
 
-T = TypeVar['T']
-E = TypeVar['E']
+T = TypeVar('T')
+E = TypeVar('E')
 
 
 class Result(Generic[T, E]):
