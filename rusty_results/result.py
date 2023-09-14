@@ -1,45 +1,65 @@
-from typing import TypeVar, Generic, Literal, Union, Protocol
+from typing import TypeVar, Protocol, runtime_checkable
 
-T = TypeVar('T')
-E = TypeVar('E')
+T = TypeVar("T")
+E = TypeVar("E")
 
 
-class Result(Generic[T, E]):
-    """A generic, Rust-inspired Result class used for returning either a successful result or a list of errors."""
+@runtime_checkable
+class Result(Protocol[T]):
+    def __eq__(self, other) -> bool:
+        ...
 
-    __ok: T | None
-    __err: list[E] | None
+    def is_ok(self) -> bool:
+        ...
 
-    @classmethod
-    def ok(cls, result: T):
-        return cls('ok', result)
+    def is_err(self) -> bool:
+        ...
 
-    @classmethod
-    def error(cls, *errors: Union['Result', Exception]):
-        errors_ = []
-        for maybe_err in errors:
-            if isinstance(maybe_err, Exception):
-                errors_.append(Result.error(maybe_err))
-            else:
-                assert isinstance(maybe_err, Result), 'Expected either an Exception or Result type.'
-        return cls('error', errors_)
+    def tuple(self) -> (str, T):
+        ...
 
-    def __init__(self, status: Literal['ok', 'error'], contents: T | list[E] | None):
-        if status == 'ok':
-            self.__ok = contents
-            self.__err = None
+
+class Ok(Result[T]):
+    __match_args__ = ('value',)
+    value: T
+
+    def __init__(self, value: T):
+        self.value = value
+
+    def __eq__(self, other):
+        if isinstance(other, Ok) and self.value == other.value:
+            return True
         else:
-            self.__err = contents
-            self.__ok = None
-
-    def status_and_value(self) -> Union[(Literal['ok'], T), (Literal['error'], E)]:
-        if self.__ok:
-            return 'ok', self.__ok
-        else:
-            return 'error', self.__err
+            return False
 
     def is_err(self):
-        return bool(self.__err)
+        return False
 
     def is_ok(self):
-        return bool(self.__ok)
+        return True
+
+    def tuple(self) -> (str, T):
+        return "ok", self.value
+
+
+class Err(Result[E]):
+    __match_args__ = ('err',)
+    err: E
+
+    def __init__(self, err: E):
+        self.err = err
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Err) and self.err == other.err:
+            return True
+        else:
+            return False
+
+    def is_err(self) -> bool:
+        return True
+
+    def is_ok(self) -> bool:
+        return False
+
+    def tuple(self) -> (str, E):
+        return "err", self.err
